@@ -1,0 +1,300 @@
+##### start of Listing 8.1 ##### 
+def binary_search(s, k):
+    low = 0; high = len(s) - 1
+    while low <= high:
+        mid = (high + low) // 2
+        print('(%2d,  %2d) low = %d, mid = %d, high = %d'
+               % (k, s[mid], low, mid, high))
+        if k == s[mid]:
+            return mid
+        elif k < s[mid]:
+            high = mid - 1
+        else:
+            low = mid + 1
+    return -1
+
+s = [5, 6, 21, 32, 51, 60, 67, 73, 77, 99]
+print(binary_search(s, 77)); print(binary_search(s, 31))
+##### end of Listing 8.1 ##### 
+
+##### start of Listing 8.2 ##### 
+(77,  51) low = 0, mid = 4, high = 9
+(77,  73) low = 5, mid = 7, high = 9
+(77,  77) low = 8, mid = 8, high = 9
+8
+(31,  51) low = 0, mid = 4, high = 9
+(31,   6) low = 0, mid = 1, high = 3
+(31,  21) low = 2, mid = 2, high = 3
+(31,  32) low = 3, mid = 3, high = 3
+-1
+##### end of Listing 8.2 ##### 
+
+##### start of Listing 8.3 ##### 
+def linear_search(s, k):
+    for i in range(len(s)):
+        if s[i] == k: return i
+    return -1
+##### end of Listing 8.3 ##### 
+
+##### start of Listing 8.4 ##### 
+def merge_ordered_lists(s1, s2):
+    t = []
+    i = j = 0
+    while i < len(s1) and j < len(s2):
+        if s1[i] < s2[j]:
+            t.append(s1[i]); i += 1
+        else:
+            t.append(s2[j]); j += 1
+    t += s1[i:]
+    t += s2[j:]
+    print('%s + %s => %s' % (s1, s2, t));
+    return t
+
+def merge_sort(s):
+    if len(s) <= 1:
+        return s
+    mid = len(s) // 2
+    print('%s -> %s + %s' % (s, s[:mid], s[mid:]));
+    left = merge_sort(s[:mid])
+    right = merge_sort(s[mid:])
+    return merge_ordered_lists(left, right)
+
+s = [21, 73, 6, 67, 99, 60, 77, 5, 51, 32]
+print(s); print(merge_sort(s))
+##### end of Listing 8.4 ##### 
+
+##### start of Listing 8.5 ##### 
+[21, 73, 6, 67, 99, 60, 77, 5, 51, 32]
+[21, 73, 6, 67, 99, 60, 77, 5, 51, 32] ->
+    [21, 73, 6, 67, 99] + [60, 77, 5, 51, 32]
+[21, 73, 6, 67, 99] -> [21, 73] + [6, 67, 99]
+[21, 73] -> [21] + [73]
+[21] + [73] => [21, 73]
+[6, 67, 99] -> [6] + [67, 99]
+[67, 99] -> [67] + [99]
+[67] + [99] => [67, 99]
+[6] + [67, 99] => [6, 67, 99]
+[21, 73] + [6, 67, 99] => [6, 21, 67, 73, 99]
+[60, 77, 5, 51, 32] -> [60, 77] + [5, 51, 32]
+[60, 77] -> [60] + [77]
+[60] + [77] => [60, 77]
+[5, 51, 32] -> [5] + [51, 32]
+[51, 32] -> [51] + [32]
+[51] + [32] => [32, 51]
+[5] + [32, 51] => [5, 32, 51]
+[60, 77] + [5, 32, 51] => [5, 32, 51, 60, 77]
+[6, 21, 67, 73, 99] + [5, 32, 51, 60, 77] =>
+    [5, 6, 21, 32, 51, 60, 67, 73, 77, 99]
+[5, 6, 21, 32, 51, 60, 67, 73, 77, 99]
+##### end of Listing 8.5 ##### 
+
+##### start of Listing 8.6 ##### 
+def insertion_sort(s):
+    n = len(s)
+    for i in range(1, n):
+        value = s[i]; print('insert %2d: ' % value, end = ' ')
+        pos = i
+        while pos > 0 and value < s[pos - 1] :
+            s[pos] = s[pos - 1]
+            pos -= 1
+        s[pos] = value
+        print(s)
+
+s = [21, 73, 6, 67, 99, 60, 77, 5, 51, 32]; print(s)
+insertion_sort(s)
+##### end of Listing 8.6 ##### 
+
+##### start of Listing 8.7 ##### 
+[21, 73, 6, 67, 99, 60, 77, 5, 51, 32]
+insert 73:  [21, 73, 6, 67, 99, 60, 77, 5, 51, 32]
+insert  6:  [6, 21, 73, 67, 99, 60, 77, 5, 51, 32]
+insert 67:  [6, 21, 67, 73, 99, 60, 77, 5, 51, 32]
+insert 99:  [6, 21, 67, 73, 99, 60, 77, 5, 51, 32]
+insert 60:  [6, 21, 60, 67, 73, 99, 77, 5, 51, 32]
+insert 77:  [6, 21, 60, 67, 73, 77, 99, 5, 51, 32]
+insert  5:  [5, 6, 21, 60, 67, 73, 77, 99, 51, 32]
+insert 51:  [5, 6, 21, 51, 60, 67, 73, 77, 99, 32]
+insert 32:  [5, 6, 21, 32, 51, 60, 67, 73, 77, 99]
+##### end of Listing 8.7 ##### 
+
+##### start of Listing 8.8 ##### 
+s1 = """\
+a = []
+for i in range(100000):
+    a.append(i)
+"""
+
+s2 = """\
+import random
+def sort_random_list(n):
+    alist = [random.random() for i in range(n)]
+    alist.sort()
+
+sort_random_list(%d)
+"""
+
+import timeit
+N = 10
+print('%.4f' % (timeit.timeit(stmt=s1, number=N) / N)) 
+
+for n in [10000, 20000, 40000, 80000]:
+    t = timeit.timeit(stmt=s2 % n, number=N) / N
+    print('%d : %.4f' % (n, t), end = ' ')
+##### end of Listing 8.8 ##### 
+
+##### start of Listing 8.9 ##### 
+import array; import numpy as np
+
+x1, x2, y1, y2 = -1.6, 1.6, -1.6, 1.6    
+c_real, c_imag = -0.05, 0.68
+
+@profile
+def calc_z_python(max_iter, zs, c):
+    n_iter = [0] * len(zs)
+    for i in range(len(zs)):
+        z = zs[i]
+        n = 0
+        while abs(z) < 2 and n < max_iter:
+            z = z * z + c
+            n += 1
+        n_iter[i] = n
+    return n_iter
+
+@profile
+def calc_Julia(create, length, max_iter):
+    xs = np.linspace(x1, x2, length)
+    ys = np.linspace(y1, y2, length)
+    c = complex(c_real, c_imag)
+    length_2 = length*length
+    zs = np.zeros(length_2, complex)
+    i = 0
+    for x in xs:
+         for y in ys:
+             zs[i] = complex(x, y)
+             i += 1
+    n_iter = calc_z_python(max_iter, zs, c)
+    if create: 
+        create_image(n_iter, length, 'julia_set.png')
+
+from PIL import Image
+def create_image(n_iter_raw, length, fn):
+    max_value = float(max(n_iter_raw))
+    n_iter_raw_limited = [int(float(o) / max_value * 215) \
+                          for o in n_iter_raw]
+    rgb = array.array('B')
+    for o in n_iter_raw_limited:
+        rgb.append(255-o); rgb.append(255-int(o/1.2))
+        rgb.append(255-int(o/1.5))	
+    im = Image.new("RGB", (length, length));
+    im.frombytes(rgb.tobytes(), "raw", "RGB")
+    im.save(fn)
+
+calc_Julia(create=False, length=500, max_iter=215)
+##### end of Listing 8.9 ##### 
+
+##### start of Listing 8.10 ##### 
+import numpy as np
+np.random.seed(26)
+data = np.random.randn(50000)
+
+def my_sum(data):
+    r = 0
+    for e in data:
+        r += e
+    return r
+
+assert np.allclose(my_sum(data), np.sum(data))	
+
+def my_cumsum(data):
+    rs = np.zeros_like(data)
+    r = 0
+    for i in range(len(data)):
+        r += data[i]
+        rs[i] = r
+    return rs
+
+assert np.allclose(my_cumsum(data), np.cumsum(data))
+##### end of Listing 8.10 ##### 
+
+##### start of Listing 8.11 ##### 
+In[1]: %timeit my_sum(data)
+Out[1]: `8.63 ms ¡À 125 ?s per loop (mean ¡À std. dev. of 7 runs, 100 loops each)`
+In[2]: %timeit np.sum(data)
+Out[2]: `37.9 ?s ¡À 2.69 ?s per loop (mean ¡À std. dev. of 7 runs, 10,000 loops each)`
+In[3]: %timeit my_cumsum(data)
+Out[3]: `17.4 ms ¡À 382 ?s per loop (mean ¡À std. dev. of 7 runs, 100 loops each)`
+In[4]: %timeit np.cumsum(data)
+Out[4]: `153 ?s ¡À 4.11 ?s per loop (mean ¡À std. dev. of 7 runs, 10,000 loops each)`
+##### end of Listing 8.11 ##### 
+
+##### start of Listing 8.12 ##### 
+import numpy as np; import numba
+np.random.seed(26)
+data = np.random.randn(50000)
+
+@numba.jit(nopython=True)
+def my_sum(data):
+    r = 0
+    for e in data:
+        r += e
+    return r
+
+@numba.jit(nopython=True)
+def my_cumsum(data):
+    rs = np.zeros_like(data)
+    r = 0
+    for i in range(len(data)):
+        r += data[i]
+        rs[i] = r
+    return rs
+##### end of Listing 8.12 ##### 
+
+##### start of Listing 8.13 ##### 
+In[1]: %timeit my_sum(data)
+Out[1]: `47.5 ?s ¡À 458 ns per loop (mean ¡À std. dev. of 7 runs, 10,000 loops each)`
+In[2]: %timeit my_cumsum(data)
+Out[2]: `67.6 ?s ¡À 1.44 ?s per loop (mean ¡À std. dev. of 7 runs, 10,000 loops each)`
+##### end of Listing 8.13 ##### 
+
+##### start of Listing 8.14 ##### 
+import numpy as np
+import numba, math, time, multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor, wait
+
+@numba.jit(nopython=True)
+def task(i, N, n):
+    result = 0
+    for x in range(i, N, n):
+        result += 1/(float(x)*x)
+    return result
+	
+if __name__ == '__main__':
+    N = 10**10 
+    for multi in (True, False):  
+        if multi:  
+            start = time.perf_counter()
+            mp.set_start_method('spawn', force=True)
+
+            n = mp.cpu_count() 
+            pool = ProcessPoolExecutor(n) 
+            futures = []
+            for i in range(1, n+1):
+                futures.append(pool.submit(task, i, N, n)) 
+            wait(futures) 
+
+            sum = 0
+            for f in futures:
+                sum += f.result()  
+
+            finish = time.perf_counter()
+            print('multi: pi = %.10f ; time = %.2f second(s)' %
+                  ( math.sqrt(sum*6), finish-start ) )
+        else:    
+            start = time.perf_counter()
+            sum = task(1, N, 1)
+            finish = time.perf_counter()
+            print('single: pi = %.10f ; time = %.2f second(s)' %
+                  ( math.sqrt(sum*6), finish-start ) )
+
+##### end of Listing 8.14 ##### 
+
