@@ -1,0 +1,69 @@
+##### start of Listing 10.1 ##### 
+In[1]: a = sym.Symbol("a"); b = sym.Symbol("b", real=True)
+In[2]: c = sym.Symbol("c", positive=True)
+In[3]: d = sym.Symbol("d", negative=True)
+In[4]: a.is_real, b.is_real, c.is_real and c.is_positive
+Out[4]: (None, True, True)
+In[5]: d.is_real and d.is_negative
+Out[5]: True
+In[6]: e, f, g = sym.symbols("e, f, g", integer=True)
+In[7]: f.is_integer
+Out[7]: True
+In[8]: j = sym.Symbol("j", odd=True)
+In[9]: k = sym.Symbol("k", even=True)
+In[10]: j.is_integer and j.is_odd, k.is_integer and k.is_even
+Out[10]: (True, True)
+##### end of Listing 10.1 ##### 
+
+##### start of Listing 10.2 ##### 
+In[1]: p = sym.Integer(123); (p.is_Integer, p.is_real, p.is_odd)
+Out[1]: (True, True, True)
+In[2]: q = sym.Float('0.4'); (q.is_Integer, q.is_real, q.is_odd)
+Out[2]: (False, True, False)
+In[3]: r = sym.Float('0.3'); q - r, float(q)-float(r)
+Out[3]: (0.100000000000000, 0.10000000000000003)
+In[4]: s = sym.Rational(6, 7); t = sym.Rational(19, 8)
+In[5]: s+t, s-t, s*t, s/t
+Out[5]: (181/56, -85/56, 57/28, 48/133)
+In[6]: (p + sym.I * 5) * (q - sym.I * r)
+Out[6]: (0.4-0.3i)(123+5i)
+In[7]: sym.simplify((p + sym.I * 5) * (q - sym.I * r))
+Out[7]: 50.7-34.9i
+##### end of Listing 10.2 ##### 
+
+##### start of Listing 10.3 ##### 
+import numpy as np; import sympy as sym
+import matplotlib.pyplot as plt
+
+def solve_for_constants(sol, ics, x, known_params):
+    intgr_constants = sol.free_symbols - set(known_params)
+    eqs = [(sol.lhs.diff(x, n) - sol.rhs.diff(x, n))
+           .subs(x, 0).subs(ics) for n in range(len(ics))]
+    values = sym.solve(eqs, intgr_constants)
+    return sol.subs(values) 
+
+t, m, b, k = sym.symbols("t, m, b, k", positive=True)
+x = sym.Function("x")
+ode = m * x(t).diff(t, 2) + b * x(t).diff(t) + k * x(t)
+sym.Eq(ode, 0)
+ode_sol = sym.dsolve(ode); ode_sol
+ics = {x(0): 1, x(t).diff(t).subs(t, 0): 0}
+
+x_t = solve_for_constants(ode_sol, ics, t, [m, b, k])
+x_t_k_m = x_t.rhs.subs({k:9, m:1}) 
+
+fig, ax = plt.subplots(figsize=(8, 4));
+tt = np.linspace(0, 10, 100)
+bs = [0.5, 1, 2.0, 6.0, 10.0]
+
+for i in range(len(bs)):
+    if i != 3:
+        x_t = sym.lambdify(t, x_t_k_m.subs({b: bs[i]}), 'numpy')
+    else: 
+        x_t = sym.lambdify(t, sym.limit(x_t_k_m, b, 6.0), 'numpy')
+    ax.plot(tt, x_t(tt).real, label=r"$b = %.1f$" % bs[i])
+
+ax.set_xlabel(r"$t$"); ax.set_ylabel(r"$x(t)$"); ax.legend()
+plt.title('Damped Harmonic Oscillators')
+##### end of Listing 10.3 ##### 
+

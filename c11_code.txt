@@ -1,0 +1,404 @@
+##### start of Listing 11.1 ##### 
+import numpy as np; from numpy import polynomial as pl
+from scipy import interpolate; import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(2, 2, figsize=(12, 8))
+
+x = np.array([2,3,5,7,11,13])
+y = np.array([17,19,23,29,31,37])
+f1 = pl.Polynomial.fit(x, y, len(x) - 1)
+f2 = interpolate.interp1d(x, y, kind='cubic')
+colors = ('r', 'g'); labels = ('polynomial', 'spline of order 3')
+
+xx = np.linspace(x.min(), x.max(), 100); f = (f1, f2)
+for i in range(2):
+    axes[0, i].set_xticks(x); axes[0, i].set_yticks(y)
+    axes[0, i].scatter(x, y, label='data points')
+    axes[0, i].plot(xx, f[i](xx), 'r--', lw=2, label=labels[i])
+
+def runge(x): return 1/(1 + 25 * x**2)
+def runge_interpolate(n):
+    x = np.linspace(-1, 1, n + 1)
+    f1 = pl.Polynomial.fit(x, runge(x), deg=n)
+    f2 = interpolate.interp1d(x, runge(x), kind='cubic')
+    return x, f1, f2
+
+xx = np.linspace(-1, 1, 100)
+for i in range(2):
+    axes[1, i].set_xticks([-1, -0.5, 0, 0.5, 1])
+    axes[1, i].plot(xx, runge(xx), 'k', lw=1,
+                    label="Runge's function")
+
+for n in (13, 14):
+    x, f1, f2 = runge_interpolate(n); f = (f1, f2)
+    for i in range(2):
+        axes[1, i].plot(x, runge(x), colors[n-13]+'o');
+        axes[1, i].plot(xx, f[i](xx), colors[n-13]+'--',
+                        label='n = %d, ' % (n+1) + labels[i],
+                        lw=2)
+
+for i in range(2):
+    for j in range(2):
+        axes[i, j].set_xlabel(r"$x$", fontsize=18)
+        axes[i, j].set_ylabel(r"$y$", fontsize=18)
+        axes[i, j].legend();
+
+fig.tight_layout(); plt.show()
+##### end of Listing 11.1 ##### 
+
+##### start of Listing 11.2 ##### 
+from numpy import polynomial as pl; import numpy as np
+from scipy import interpolate; import matplotlib.pyplot as plt
+
+def f(x,y):
+    return (x**7 - y**6 + x**5 - y**4 + x**3 - y**2 + x - 1) *
+            np.exp(-x**2 - y**2)
+
+def create_colorbar(c,i,j):
+    cb = fig.colorbar(c, ax=axes[i,j], orientation='horizontal')
+    cb.set_label(r"$z$", fontsize=18);
+
+fig, axes = plt.subplots(2, 3, figsize=(12, 8))
+
+N = 20; xmin = -3; xmax = 3; ymin = -2.5; ymax = 2.5
+xN = np.linspace(xmin, xmax, int(np.rint(N*(xmax-xmin))))
+yN = np.linspace(ymin, ymax, int(np.rint(N*(ymax-ymin))))
+XN, YN = np.meshgrid(xN, yN)
+c = axes[0,0].contourf(XN, YN, f(XN, YN), 15, cmap=plt.cm.RdBu)
+create_colorbar(c, 0, 0)
+axes[0,0].set_title("function f(x,y)")
+
+ns = (20, 40)
+for i in range(2):
+    n = ns[i]; title = "equidistant grid of "
+    x = np.linspace(xmin, xmax, n)
+    y = np.linspace(ymin, ymax, n)
+    X, Y = np.meshgrid(x, y); Z = f(X, Y)
+    f_i = interpolate.RectBivariateSpline(x, y, Z, kx=3, ky=3)
+    c = axes[0, i+1].contourf(X, Y, f_i(x, y), 15,
+                              cmap=plt.cm.RdBu)
+    create_colorbar(c, 0, i+1)
+    axes[0, i+1].set_title(title + (r"$%d \times %d$" % (n, n)))
+
+ns = (20, 40, 80)
+for i in range(3):
+    n = ns[i]; title = "random grid of "
+    x = np.sort(np.random.uniform(xmin, xmax, n))
+    y = np.sort(np.random.uniform(ymin, ymax, n))
+    X, Y = np.meshgrid(x, y); Z = f(X, Y)
+    f_i = interpolate.interp2d(x, y, Z, kind='cubic')
+    c = axes[1, i].contourf(X, Y, f_i(x, y), 15,
+                            cmap=plt.cm.RdBu)
+    create_colorbar(c, 1, i)
+    axes[1, i].set_title(title + (r"$%d \times %d$" % (n, n)))
+
+for i in range(2):
+    for j in range(3):
+        axes[i, j].set_xlabel(r"$x$", fontsize=18)
+        axes[i, j].set_ylabel(r"$y$", fontsize=18)
+
+fig.tight_layout(); plt.show()
+##### end of Listing 11.2 ##### 
+
+##### start of Listing 11.3 ##### 
+import sympy as sym
+a, b, x = sym.symbols("a, b, x"); f = sym.Function("f")
+
+def Newton_Cotes(points):
+    n = len(points) - 1;
+    w = [sym.symbols("w_%d" % i) for i in range(n+1)]
+    wf = sum([w[i] * f(points[i]) for i in range(n+1)])
+    mo = [sym.Lambda(x, x**i) for i in range(n+1)]
+    eqns = [wf.subs(f, mo[j]) - sym.integrate(mo[j](x), (x, a, b))
+            for j in range(len(mo))]
+    wv = sym.solve(eqns, w); print(wv)
+
+def Gauss_Legendre():
+    n = 1; n21 = n * 2 + 1
+    w = [sym.symbols("w_%d" % i) for i in range(n+1)]
+    p = [sym.symbols("p_%d" % i) for i in range(n+1)]
+    wf = sum([w[i] * f(p[i]) for i in range(n+1)])
+    mo = [sym.Lambda(x, x**i) for i in range(n21+1)]
+    eqns = [wf.subs(f, mo[j]) - sym.integrate(mo[j](x), (x, a, b))
+            for j in range(len(mo))]
+    wp = sym.solve(eqns, (w+p)); print(wp)
+	
+Newton_Cotes((a,b))             
+Newton_Cotes((a, (a+b)/2, b))   
+Gauss_Legendre()                
+##### end of Listing 11.3 ##### 
+
+##### start of Listing 11.4 ##### 
+In[1]: import numpy as np; from scipy import integrate as intg
+In[2]: fx_x = lambda x: x**x; intg.quad(fx_x, 1.2, 3.4)
+Out[2]: (30.599509184696394, 3.397227963907889e-13)
+In[3]: f = lambda x: x**3 * np.exp(-x/2); intg.quad(f, 3, np.inf)
+Out[3]: (89.69832437966879, 3.1502359529867805e-09)
+In[4]: def f(x, m, s): return np.exp(-(np.log(x)-m)**2 / 2*s**2)
+In[5]: intg.quad(f, 12, 345, args=(6, 7))
+Out[5]: (15.74013093722831, 1.0590146746095474e-10)
+In[6]: from scipy.special import jv; f = lambda x: jv(3, x)
+In[7]: intg.quad(f, -2, 4)
+Out[7]: (0.598452354532213, 8.20824966029651e-15)
+In[8]: intg.quad(lambda x: 1/(x-2)**2, 1, 3)
+Out[8]: ZeroDivisionError: float division by zero
+In[9]: intg.quad(lambda x: 1/(x-2)**2, 1, 3, points=[2])
+Out[9]: (-1.9999999878646795, 2.5911172985004782e-08)
+In[10]: def f(x, y): return (x**2 + 3*y**2) * np.exp(-x**2 - y**2)
+In[11]: intg.dblquad(f, 0.1, 2.3, lambda x:0.01,
+                     lambda x:np.exp(x))
+Out[11]: (1.4327976138140261, 1.339276139066072e-08)
+In[12]: def f(x, y, z): return np.exp(-x-y**2-z**3)
+In[13]: c = lambda x: x**2 + 1; d = lambda x: x**2 + 3*x + 2
+In[14]: g = lambda x, y: 2; h = lambda x, y: x + y**2 + 3
+In[15]: intg.tplquad(f, 0.1, 2.3, c, d, g, h)
+Out[15]: (0.00673873020840579, 3.187940716866225e-11)
+In[16]: intg.nquad(f, [(0, 1), (0, 1), (0, 1)])
+Out[16]: (0.38121221110217796, 7.017914825696364e-15)
+In[17]: x = np.linspace(1.2, 3.4, 129); y = fx_x(x)
+In[18]: intg.simps(y, x), intg.trapz(y, x),
+        intg.romb(y, x[1] - x[0])
+Out[18]: 30.59950958243804 30.602983316264865 30.59950918469625
+In[19]: x = np.sort(np.random.uniform(1.2, 3.4, 129))
+In[20]: y = fx_x(x)
+In[21]: intg.simps(y, x), intg.trapz(y, x)
+Out[21]: 27.982982418725783 28.00358352039727
+##### end of Listing 11.4 ##### 
+
+##### start of Listing 11.5 ##### 
+import numpy as np
+X = np.array([[1, -5, 2, 7], [3, 4, -2, 8], [5, 1, -3, 9],
+              [2, -4, 1, -6], [6, 2, 3, 7]])
+y = np.array([11, 13, 17, 19, 23])
+print(np.linalg.lstsq(X, y, rcond=None)[0])
+##### end of Listing 11.5 ##### 
+
+##### start of Listing 11.6 ##### 
+In[1]: from scipy import optimize as optm
+In[2]: def f(x): return np.exp(x) - 3*x**3 - 6*x**2
+In[3]: optm.bisect(f, 0, 1), optm.bisect(f, -1, 0)
+Out[3]: (0.4638232777815574, -0.37544418741708796)
+In[4]: fp = lambda x: np.exp(x) - 9*x**2 - 12*x
+In[5]: optm.newton(f, 1, fprime = fp),
+       optm.newton(f, 0, fprime = fp)
+Out[5]: (0.4638232777821511, -0.3754441874171241)
+In[6]: optm.newton(f, 1), optm.newton(f, 0)
+Out[6]: (0.4638232777821511, -0.3754441874171324)
+In[7]: optm.brentq(f, 0, 1), optm.brentq(f, -1, 0)
+Out[7]: (0.4638232777821511, -0.3754441874168658)
+In[8]: optm.newton(lambda x: x**20-1, 0.5,
+                   fprime = lambda x: 20*x**19)
+Out[8]: RuntimeError: Failed to converge after 50 iterations, ...
+##### end of Listing 11.6 ##### 
+
+##### start of Listing 11.7 ##### 
+import numpy as np; import matplotlib.pyplot as plt
+import sympy as sym
+
+tol = 0.01; s_x = sym.symbols("x");
+s_f = sym.exp(s_x) - 3*s_x**3 - 6*s_x**2
+f = lambda x: sym.lambdify(s_x, s_f, 'numpy')(x)
+fp = lambda x: sym.lambdify(s_x, sym.diff(s_f, s_x), 'numpy')(x)
+lb = -1; ub = 0;  xk = ub; x = np.linspace(lb, ub, 1000);
+
+fig, axes = plt.subplots(1, 2, figsize=(8, 4), dpi = 300,
+                         constrained_layout=True)
+
+def plot_x(i, x, n):
+    axes[i].plot([x, x], [0, f(x)], color='k', ls=':')
+    axes[i].plot(x, f(x), 'ko')
+    axes[i].text(x-0.05, -.1, r'$x_%d$' % n, fontsize=10)
+
+axes[0].plot(x, f(x)); axes[0].axhline(0, ls=':', color='k')
+for n in range(5):
+    xk_new = xk - f(xk) / fp(xk)
+    plot_x(0, xk, n)
+    axes[0].plot([xk, xk_new], [f(xk), 0], 'g-');
+    xk = xk_new; n += 1
+    print(n, xk_new)
+
+axes[0].plot(xk, f(xk), 'ro', markersize=5)
+axes[0].annotate(r"root $\approx$ %.3f" % xk, fontsize=12,
+                 family="serif", xy=(xk, f(xk)),
+                 xytext=(10, -20), textcoords='offset points',
+                 arrowprops=dict(arrowstyle='wedge'))
+axes[0].set_title("Newton's method")
+axes[0].set_xticks(np.linspace(lb, ub, 11))
+
+axes[1].plot(x, f(x)); axes[1].axhline(0, ls=':', color='k')
+
+xj = -1; xk = 0
+plot_x(1, xj, 0)
+for n in range(4):
+    xk_new = xk - f(xk) * (xk - xj) / (f(xk) - f(xj))
+    axes[1].plot([xk_new, xk], [0, f(xk)], 'g-');
+    axes[1].plot([xk_new, xj], [0, f(xj)], 'g-');
+    axes[1].plot([xk, xj], [f(xk), f(xj)], 'g-');
+    n += 1; plot_x(1, xk, n); xj = xk; xk = xk_new;
+    print(n, xk_new)
+
+axes[1].plot(xk, f(xk), 'ro', markersize=5)
+axes[1].annotate(r"root $\approx$ %.3f" % xk, fontsize=12,
+                 family="serif", xy=(xk, f(xk)),
+                 xytext=(-80, 20), textcoords='offset points',
+                 arrowprops=dict(arrowstyle='wedge'))
+axes[1].set_title("Secant method")
+axes[1].set_xticks(np.linspace(lb, ub, 11))
+plt.show()
+##### end of Listing 11.7 ##### 
+
+##### start of Listing 11.8 ##### 
+import numpy as np; import sympy as sym
+from scipy import optimize as optm
+
+x, y, z = sym.symbols("x, y, z")
+f_mat = sym.Matrix([3*x - sym.cos(y*z) - 0.5,
+                    4*x**2 - 625*y**2 + 2*y - 1,
+                    sym.exp(-x*y) + 20*z - 9*sym.pi])
+j = f_mat.jacobian(sym.Matrix([x, y, z]))
+
+def f(x):
+    return [3*x[0] - np.cos(x[1]*x[2]) - 0.5,
+            4*x[0]**2 - 625*x[1]**2 + 2*x[1] - 1,
+            np.exp(-x[0]*x[1]) + 20*x[2] - 9*np.pi]
+def f2(x):
+    f_j =  np.array([
+            [3, x[2]*np.sin(x[1]*x[2]), x[1]*np.sin(x[1]*x[2])],
+            [8*x[0], 2-1250*x[1], 0],
+            [-x[1]*np.exp(-x[0]*x[1]),
+             -x[0]*np.exp(-x[0]*x[1]), 20] ])
+    return f(x), f_j
+
+print(optm.root(f2, [1, 1, 1], jac=True, method='hybr'))
+print(optm.root(f, [1, 1, 1], jac=False, method='hybr'))
+print(optm.root(f2, [1, 1, 1], jac=True, method='lm'))
+print(optm.root(f, [1, 1, 1], jac=False, method='lm'))
+print(optm.root(f, [1, 1, 1], method='broyden1'))
+##### end of Listing 11.8 ##### 
+
+##### start of Listing 11.9 ##### 
+import numpy as np; from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+
+def Holling_Tanner(t, X):
+    x, y = X
+    return np.array([ x*(1 - x/7) - 6*x*y/(7 + 7*x),
+                      0.2*y*(1 - 0.5*y/x) ])
+
+tmax = 200; n = 10000; x0, y0 = 6, 0.2
+t = np.linspace(0, tmax, n)
+ht = solve_ivp(Holling_Tanner, [0, tmax], [x0, y0], t_eval = t)
+x = ht.y[0]; y = ht.y[1]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4),
+                               constrained_layout=True)
+
+ax1.plot(x, y, color = 'g')
+ax1.set_xlabel('x'); ax1.set_ylabel('y')
+ax1.set_title('Phase portrait')
+
+ax2.plot(t, y, 'r-', label = 'predator')
+ax2.plot(t, x, 'b-', label = 'prey')
+ax2.set_xlabel('time'); ax2.set_ylabel('')
+ax2.legend(loc='best'); ax2.set_title("Time evolution")
+plt.show()
+##### end of Listing 11.9 ##### 
+
+##### start of Listing 11.10 ##### 
+import numpy as np; from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+
+def Lorenz(t, X, sigma, beta, rho):
+    x, y, z = X
+    dx_dt = -sigma * (x - y)
+    dy_dt = rho * x - y - x * z
+    dz_dt = -beta * z + x * y
+    return dx_dt, dy_dt, dz_dt
+
+tmax, n = 40, 4000
+x0, y0, z0 = 0, 1, 1.05; sigma, beta, rho = 10, 2.667, 28
+t = np.linspace(0, tmax, n)
+f1 = solve_ivp(Lorenz, [0, tmax], [x0, y0, z0], t_eval = t,
+              args=(sigma, beta, rho))
+f2 = solve_ivp(Lorenz, [0, tmax], [x0, y0, z0], t_eval = t,
+              args=(2*sigma, 0.5*beta, rho))
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,5),
+                               constrained_layout=True,
+                               subplot_kw={'projection':'3d'})
+for ax, xyz, c in [(ax1, f1.y, 'r'), (ax2, f2.y, 'g')]:
+    x, y, z = xyz
+    ax.plot(x, y, z, c, alpha=0.5)
+    ax.set_xlabel('$x$'); ax.set_ylabel('$y$')
+    ax.set_zlabel('$z$')
+plt.show()
+##### end of Listing 11.10 ##### 
+
+##### start of Listing 11.11 ##### 
+from scipy.optimize import fsolve
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
+import numpy as np
+
+f = lambda x, y: \
+        np.array([y[1], -800 * x + 400 * y[0] +
+                        400 * np.cos(np.pi*x) ** 2 +
+                        2 * np.pi ** 2 * np.cos(2 * np.pi*x)])
+
+def y(x):
+    c = -20; ec = np.exp(c)
+    return 2 * x + ec * np.exp(-c * x) / (1 + ec) + \
+           np.exp(c * x) / (1 + ec) - np.cos(np.pi*x) ** 2
+
+def shooting(n, ax): 
+    y0 = 0; ab = [0, 1]; x_eval = np.linspace(0, 1, n)
+    def F(y1): 
+        sol = solve_ivp(f, ab, [y0, y1], t_eval = x_eval)
+        y = sol.y[0]
+        return y[-1] - 2
+
+    s, = fsolve(F, 5); print(s)
+    res = solve_ivp(f, ab, [y0, s], t_eval = x_eval)
+    ax.set_title('shooting s=%.2f ' % s)
+    ax.plot(res.t, res.y[0], 'r.');
+    ax.plot(x_eval, y(x_eval), 'g', lw=1)
+    return res
+
+def finite_difference(n, ax): 
+   def q(x): return 400
+   def g(x): return 800 * x - 400 * np.cos(np.pi*x) ** 2 - \
+                    2 * np.pi ** 2 * np.cos(2 * np.pi*x)
+
+   a = 0; b = 1; h = (b - a) / (n + 1); h2 = h * h
+   ya = 0; yb = 2
+   x_eval = np.linspace(0, 1, n + 2)
+
+   A = np.zeros((n, n))
+   A[0, 1] = A[n-1, n-2] = -1;
+   A[0, 0] = 2 + q(x_eval[1]) * h2
+   A[n-1, n-1] = 2 + q(x_eval[n]) * h2
+   for i in range(1, n - 1):
+       A[i, i-1] = A[i, i+1] = -1
+       A[i, i] = 2 + q(x_eval[i+1]) * h2
+   A /= h2
+
+   b = np.zeros(n)
+   b[0] = g(x_eval[1]) + ya / h2
+   b[n-1] = g(x_eval[n]) + yb / h2
+   b[1:n-1] = g(x_eval[2:n])
+
+   u = np.linalg.solve(A, b)
+   v = np.hstack((np.hstack(([ya], u)), [yb]))
+   ax.set_title('finite_difference'); ax.plot(x_eval, v, 'r.')
+   ax.plot(x_eval, y(x_eval), 'g', lw=1)
+   return v
+
+fig, axes = plt.subplots(1, 2, figsize=(9, 4), dpi = 300)
+for i in (0, 1):
+    axes[i].set_xlabel('x'); axes[i].set_ylabel('y')
+fig.tight_layout(); plt.show()
+
+shooting(100, axes[0])
+finite_difference(98, axes[1])
+##### end of Listing 11.11 ##### 
+

@@ -1,0 +1,406 @@
+##### start of Listing 12.1 ##### 
+In[1]: from scipy import stats
+In[2]: dist_discrete = [d for d in dir(stats)
+           if isinstance(getattr(stats, d), stats.rv_discrete)]
+In[3]: len(dist_discrete), dist_discrete
+Out[3]: (16, ['bernoulli',...'binom', ..., 'poisson',
+              'randint',...])
+In[4]: dist_continuous = [d for d in dir(stats)
+           if isinstance(getattr(stats, d), stats.rv_continuous)]
+In[5]: len(dist_continuous), dist_continuous
+Out[5]: (101, ['chi2',...,'gamma',...,'norm',...,'t',...
+               'uniform', ...])
+In[6]: print(stats.norm.__doc__)
+Out[6]: A normal continuous random variable.
+        ......
+##### end of Listing 12.1 ##### 
+
+##### start of Listing 12.2 ##### 
+In[1]: from scipy import stats; x = stats.norm(3, 2)
+In[2]: x.mean(), x.median(), x.var(), x.std(), x.stats()
+Out[2]: (3.0, 3.0, 4.0, 2.0, (array(3.), array(4.)))
+In[3]: [x.moment(n) for n in range(1, 5)]
+Out[3]: [3.0, 13.0, 62.99999999999999, 344.99999999999994]
+In[4]: x.pdf([2, 3, 4])
+Out[4]: array([0.17603266, 0.19947114, 0.17603266])
+In[5]: x.cdf([2, 3, 4])
+Out[5]: array([0.30853754, 0.5       , 0.69146246])
+In[6]: x.interval(0.95)
+Out[6]: (-0.9199279690801081, 6.919927969080108)
+In[7]: x.ppf([0.025, 0.975])
+Out[7]: array([-0.91992797,  6.91992797])
+In[8]: x.rvs(4)
+Out[8]: array([3.56471374, 4.62667751, 4.02484388, 1.50417612])
+##### end of Listing 12.2 ##### 
+
+##### start of Listing 12.3 ##### 
+import numpy as np; from scipy import stats
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(6, 4), dpi = 300)
+
+k = np.linspace(-5, 5, 1000)
+pd1 = stats.norm(loc=0, scale=0.4)
+pd2 = stats.norm(loc=0, scale=1.0)
+pd3 = stats.norm(loc=0, scale=2.2)
+pd4 = stats.norm(loc=-2, scale=0.7)
+
+ax.set_title('Normal distribition - PDF');
+ax.set_xlabel('X'); ax.set_ylabel('P(X)');
+ax.plot(k, pd1.pdf(k), 'r'); ax.plot(k, pd2.pdf(k), 'g');
+ax.plot(k, pd3.pdf(k), 'b'); ax.plot(k, pd4.pdf(k), 'y');
+ax.legend([r"$\mu=0, \sigma=0.4$", r"$\mu=0, \sigma=1.0$",\
+           r"$\mu=0, \sigma=2.2$", r"$\mu=-2, \sigma=0.7$"])
+plt.show()
+##### end of Listing 12.3 ##### 
+
+##### start of Listing 12.4 ##### 
+import numpy as np; import matplotlib.pyplot as plt
+from scipy import stats
+
+def plot_distribution(X, i, label):
+    x_min_999, x_max_999 = X.interval(0.999)
+    x999 = np.linspace(x_min_999, x_max_999, 1000)
+    x_min_95, x_max_95 = X.interval(0.95)
+    x95 = np.linspace(x_min_95, x_max_95, 1000)
+
+    axes = axs[i, :]
+    if hasattr(X.dist, "pdf"):   
+        axes[0].plot(x999, X.pdf(x999), label="PDF")
+        axes[0].fill_between(x95, X.pdf(x95), alpha=0.25)
+    else:  
+        x999_int = np.unique(x999.astype(int))
+        axes[0].bar(x999_int, X.pmf(x999_int), label="PMF")
+    axes[1].plot(x999, X.cdf(x999), label="CDF")
+    axes[1].plot(x999, X.sf(x999), label="SF")
+    axes[2].plot(X.cdf(x999), x999, label="PPF")
+
+    for ax in axes: ax.legend()
+    axes[0].set_ylabel(label)
+
+fig, axs = plt.subplots(6, 3, figsize=(8, 11), dpi = 300)
+
+X = stats.binom(20, 0.4); plot_distribution(X, 0, "Binomial")
+X = stats.poisson(10); plot_distribution(X, 1, "Poisson")
+X = stats.uniform(); plot_distribution(X, 2, "Uniform")
+X = stats.t(20); plot_distribution(X, 3, "Student's t")
+X = stats.lognorm(0.5); plot_distribution(X, 4, "Log Normal")
+X = stats.beta(5, 2); plot_distribution(X, 5, "Beta")
+fig.tight_layout(); plt.show()
+##### end of Listing 12.4 ##### 
+
+##### start of Listing 12.5 ##### 
+import numpy as np; import matplotlib.pyplot as plt
+from scipy import stats
+
+def plot_dist_samples(X, X_samples, title=None, ax=None):
+    x_lim = X.interval(.99)
+    x = np.linspace(*x_lim, num=100)
+    ax.hist(X_samples, label="samples", density=True,
+            bins=75, rwidth=0.85)
+    ax.plot(x, X.pdf(x), 'r', label="PDF", lw=3)
+    ax.set_xlim(*x_lim); ax.legend()
+    if title: ax.set_title(title)
+
+fig, axes = plt.subplots(1, 3, figsize=(10, 3))
+N = 2000
+X = stats.t(7.0)
+plot_dist_samples(X, X.rvs(N), "Student's t dist.", ax=axes[0])
+X = stats.chi2(5.0)
+plot_dist_samples(X, X.rvs(N), r"$\chi^2$ dist.", ax=axes[1])
+X = stats.expon(0.5)
+plot_dist_samples(X, X.rvs(N), "exponential dist.", ax=axes[2])
+fig.tight_layout(); plt.show()
+##### end of Listing 12.5 ##### 
+
+##### start of Listing 12.6 ##### 
+In[1]: import random; random.seed(42)
+In[2]: rands = [random.uniform(-1,1) for i in range(4)]; rands
+Out[2]: [0.2788535969157675, -0.9499784895546661,
+         -0.4499413632617615, -0.5535785237023545]
+In[3]: import numpy as np; np.random.seed(26); np.random.rand()
+Out[3]: 0.30793495262497084
+In[4]: r = np.random.rand(4); r
+Out[4]: array([0.51939148, 0.76829766, 0.78922074, 0.87056206])
+In[5]:  r = np.random.rand(2, 2); r
+Out[5]: array([[0.18792139, 0.26950525],
+               [0.49619214, 0.73912175]])
+In[6]:  r = np.random.randint(low=-4, high=5, size=5); r
+Out[6]: array([0, 4, 1, 3, 2])
+In[7]:  np.random.randint(low=10, high=20, size=(2, 4))
+Out[7]: array([[18, 12, 15, 10],
+               [12, 13, 13, 13]])
+In[8]:  np.random.randn(2, 3)
+Out[8]: array([[ 1.46032212,  0.79185191,  0.77784432],
+               [-1.5919855 ,  0.73033189,  1.29484354]])
+##### end of Listing 12.6 ##### 
+
+##### start of Listing 12.7 ##### 
+import numpy as np
+import matplotlib as mpl; import matplotlib.pyplot as plt
+
+def gamble(x, N, p): 
+    x0 = x 
+    s_win = [] 
+    s_ruin = [] 
+    win = 0 
+    ruin = 0 
+    for k in range(0, 1000): 
+        w = [x] 
+        while x != N and x != 0:
+            r = np.random.binomial(1, p, 1)
+            x += 1 if r == 1 else -1
+            w.append(x)
+        if x == N: 
+            win += 1 
+            if len(w) > len(s_win): s_win = w.copy()
+        else:
+            ruin += 1 
+            if len(w) > len(s_ruin): s_ruin = w.copy()
+        x = x0
+    return (ruin / (ruin + win)), s_win, s_ruin
+
+x = 10 
+N = 20 
+P, s_win, s_ruin = gamble(x, N, 0.49)
+print(P)
+
+p = np.linspace(0.1, 0.9, 100)
+c = (1 - p) / p
+px = 1 - (1 - c**x) / (1 - c**N)
+
+fig = plt.figure(figsize=(12, 8), dpi = 300)
+gs = mpl.gridspec.GridSpec(2, 2)
+
+ax0 = fig.add_subplot(gs[0, :]) 
+ax0.plot(p, px)
+ax0.xaxis.set_major_locator(mpl.ticker.MaxNLocator(20))
+ax0.xaxis.set_minor_locator(mpl.ticker.MaxNLocator(100))
+ax0.yaxis.set_major_locator(mpl.ticker.MaxNLocator(10))
+ax0.yaxis.set_minor_locator(mpl.ticker.MaxNLocator(50))
+ax0.grid(color="grey", which="major", axis='x', linestyle='-',
+         linewidth=0.5)
+ax0.grid(color="grey", which="minor", axis='x', linestyle='-',
+         linewidth=0.25)
+ax0.grid(color="grey", which="major", axis='y', linestyle='-',
+         linewidth=0.5)
+ax0.grid(color="grey", which="minor", axis='y', linestyle='-',
+         linewidth=0.25)
+ax0.set_title("Probability of Gambler's Ruin vs. Probability" +
+              " of Winning One Round (x = 10, N = 20)")
+
+ax1 = fig.add_subplot(gs[1, 0]) 
+ax1.plot(np.arange(len(s_win)), s_win)
+ax1.yaxis.set_major_locator(mpl.ticker.MaxNLocator(21))
+ax1.set_title("Asset vs. Number of Rounds (x = 10, N = 20)")
+
+ax2 = fig.add_subplot(gs[1, 1]) 
+ax2.plot(np.arange(len(s_ruin)), s_ruin)
+ax2.yaxis.set_major_locator(mpl.ticker.MaxNLocator(21))
+ax2.set_title("Asset vs. Number of Rounds (x = 10, N = 20)")
+fig.tight_layout(); plt.show()
+##### end of Listing 12.7 ##### 
+
+##### start of Listing 12.8 ##### 
+In[1]: from scipy import stats; import numpy as np
+In[2]: rng = np.random.default_rng() 
+In[3]: rvs = stats.norm.rvs(loc=4, scale=10, size=(40, 2),
+             random_state=rng)
+In[4]: stats.ttest_1samp(rvs, 4.0)
+Out[4]: Ttest_1sampResult(statistic=array([0.52078101,
+   0.45723463]), pvalue=array([0.60546376, 0.65003933]))
+In[5]: stats.ttest_1samp(rvs, 1.0)
+Out[5]: Ttest_1sampResult(statistic=array([2.33735525,
+   2.3660094 ]), pvalue=array([0.0246469 , 0.02304528]))
+In[6]: stats.ttest_1samp(rvs, 1.0, alternative='less')
+Out[6]: Ttest_1sampResult(statistic=array([2.33735525,
+   2.3660094 ]), pvalue=array([0.98767655, 0.98847736]))
+In[7]: stats.ttest_1samp(rvs, 1.0, alternative='greater')
+Out[7]: Ttest_1sampResult(statistic=array([2.33735525,
+   2.3660094 ]), pvalue=array([0.01232345, 0.01152264]))
+In[8]: stats.ttest_1samp(rvs, [4.0, 1.0])
+Out[8]: Ttest_1sampResult(statistic=array([0.52078101,
+   2.3660094 ]), pvalue=array([0.60546376, 0.02304528]))
+##### end of Listing 12.8 ##### 
+
+##### start of Listing 12.9 ##### 
+In[1]: rvs1 = stats.norm.rvs(loc=4, scale=10, size=400,
+                             random_state=rng)
+In[2]: rvs2 = stats.norm.rvs(loc=4, scale=10, size=200,
+                             random_state=rng)
+In[3]: rvs3 = stats.norm.rvs(loc=8, scale=20, size=200,
+                             random_state=rng)
+In[4]: stats.ttest_ind(rvs1, rvs2)
+Out[4]: Ttest_indResult(statistic=0.47568430594388683,
+                        pvalue=0.634473019722014)
+In[5]: stats.ttest_ind(rvs1, rvs3, equal_var=False)
+Out[5]: Ttest_indResult(statistic=-2.375285510987052,
+                        pvalue=0.018247576389730322)
+In[6]: stats.ttest_ind(rvs2, rvs3, equal_var=False)
+Out[6]: Ttest_indResult(statistic=-2.5030356212394462,
+                        pvalue=0.012812946996671242)
+In[7]: stats.ttest_ind(rvs2, rvs3, equal_var=False,
+                       alternative='greater')
+Out[7]: Ttest_indResult(statistic=-2.5030356212394462,
+                        pvalue=0.9935935265016644)
+##### end of Listing 12.9 ##### 
+
+##### start of Listing 12.10 ##### 
+In[1]: exam_1 = np.array([79, 100, 93, 75, 84, 107, 66, 86, 103,
+    81, 83, 89, 105, 84, 86, 86, 112, 112, 100, 94])
+In[2]: exam_2 = np.array([92, 100, 76, 97, 72, 79,  94, 71, 84,
+    76, 82, 57, 67,  78, 94, 83, 85,  92,  76,  88])
+In[3]: (t, pVal) = stats.ttest_rel (exam_1, exam_2); (t, pVal)
+Out[3]: (2.3040209271929544, 0.032682085532223897)
+In[4]: stats.ttest_rel(exam_1, exam_2, alternative='less')
+Out[4]: Ttest_relResult(statistic=2.3040209271929544,
+                        pvalue=0.9836589572338881)
+In[5]: stats.ttest_rel(exam_1, exam_2, alternative='greater')
+Out[5]: Ttest_relResult(statistic=2.3040209271929544, 
+                        pvalue=0.016341042766111948)						
+##### end of Listing 12.10 ##### 
+
+##### start of Listing 12.11 ##### 
+In[1]: import numpy as np
+In[2]: y = np.array([11, 13, 17, 19, 23])
+In[3]: x1 = np.array([1, 3, 5, 7, 9])
+In[4]: x2 = np.array([2, 4, 6, 8, 10])
+In[5]:X = np.vstack([np.ones(5), x1, x2, x1*x2]).T; X
+Out[5]:
+array([[ 1.,  1.,  2.,  2.],
+       [ 1.,  3.,  4., 12.],
+       [ 1.,  5.,  6., 30.],
+       [ 1.,  7.,  8., 56.],
+       [ 1.,  9., 10., 90.]])
+In[6]: np.linalg.lstsq(X, y, rcond=None)[0]
+Out[6]: array([ 6.10238095, -2.49761905,  3.6047619 ,
+                0.03571429])
+##### end of Listing 12.11 ##### 
+
+##### start of Listing 12.12 ##### 
+In[1]: import patsy; import pandas as pd
+In[2]: import statsmodels.api as sm
+In[3]: data = {"y": y, "x1": x1, "x2": x2}
+In[4]: df_data = pd.DataFrame(data)
+In[5]: y, X = patsy.dmatrices("y ~ 1 + x1 + x2 + x1:x2", df_data,
+                              return_type="dataframe")
+In[6]: X
+Out[6]:
+Intercept   x1    x2  x1:x2
+0        1.0  1.0   2.0    2.0
+1        1.0  3.0   4.0   12.0
+2        1.0  5.0   6.0   30.0
+3        1.0  7.0   8.0   56.0
+4        1.0  9.0  10.0   90.0
+In[7]: model = sm.OLS(y, X); result = model.fit(); result.params
+Out[7]:
+Intercept    6.102381
+x1          -2.497619
+x2           3.604762
+x1:x2        0.035714
+dtype: float64
+In[8]: np.array(X)
+Out[8]:
+array([[ 1.,  1.,  2.,  2.],
+       [ 1.,  3.,  4., 12.],
+       [ 1.,  5.,  6., 30.],
+       [ 1.,  7.,  8., 56.],
+       [ 1.,  9., 10., 90.]])
+##### end of Listing 12.12 ##### 
+
+##### start of Listing 12.13 ##### 
+In[1]: import patsy; from collections import defaultdict
+In[2]: data = {k: np.array([]) for k in ["y", "u", "v", "w"]}
+In[3]: patsy.dmatrices("y ~ u", data=data)[1].
+                       design_info.term_names
+Out[3]: ['Intercept', 'x']
+In[4]: patsy.dmatrices("y ~ u + v", data=data)[1].
+                       design_info.term_names
+Out[4]: ['Intercept', 'u', 'v']
+In[5]: patsy.dmatrices("y ~ u * v", data=data)[1].
+                       design_info.term_names
+Out[5]: ['Intercept', 'u', 'v', 'u:v']
+In[6]: patsy.dmatrices("y ~ u * v * w", data=data)[1].
+                       design_info.term_names
+Out[6]: ['Intercept', 'u', 'v', 'u:v', 'w', 'u:w', 'v:w', 'u:v:w']
+In[7]: patsy.dmatrices("y ~ u * v * w  - u:v:w", data=data)[1].
+                       design_info.term_names
+Out[7]: ['Intercept', 'u', 'v', 'u:v', 'w', 'u:w', 'v:w']
+In[8]: patsy.dmatrices("y ~ np.log(u) + v", data=data)[1].
+                       design_info.term_names
+Out[8]: ['Intercept', 'np.log(u)', 'v']
+In[9]: patsy.dmatrices(
+           "y ~ I(u**2) * I(v**2) - I(u**2) : I(v**2) + u*v",
+           data=data)[1].design_info.term_names
+Out[9]: ['Intercept', 'I(u ** 2)', 'I(v ** 2)', 'u', 'v', 'u:v']
+In[10]: z = lambda x, y: np.exp(x * np.cos(y))
+In[11]: patsy.dmatrices("y ~ z(u, v) + w", data=data)[1].
+                        design_info.term_names
+Out[11]: ['Intercept', 'z(u, v)', 'w']
+##### end of Listing 12.13 ##### 
+
+##### start of Listing 12.14 ##### 
+import numpy as np; import pandas as pd;
+import statsmodels.formula.api as smf
+N = 100; x1 = np.random.randn(N); x2 = np.random.randn(N)
+data = pd.DataFrame({"x1": x1, "x2": x2})
+def y_true(x1, x2):
+    return 1 - 2 * x1 + 3 * x2 - 4 * x1 * x2 + 5 * x1 * x1 - \
+           6 * x2 * x2
+data["y_true"] = y_true(x1, x2)
+e = 0.5 * np.random.randn(N)
+data["y"] = data["y_true"] + e
+model = smf.ols("y ~ x1 + x2", data)
+result = model.fit(); print(result.rsquared)
+model2 = smf.ols("y ~ x1 + x2 + x1*x2", data)
+result2 = model2.fit(); print(result2.rsquared)
+model3 = smf.ols("y ~ x1 + x2 + x1*x2 + I(x1*x1)", data)
+result3 = model3.fit(); print(result3.rsquared)
+model4 = smf.ols("y ~ x1 + x2 + x1*x2 + I(x1*x1) + I(x2*x2)", data)
+result4 = model4.fit(); print(result4.rsquared)
+print(result4.summary())
+##### end of Listing 12.14 ##### 
+
+##### start of Listing 12.15 ##### 
+import numpy as np
+import statsmodels.api as sm
+inFile = 'D:/Python/dat/challenger_data.csv'
+data = np.genfromtxt(inFile, skip_header=1, usecols=[1, 2],
+                     delimiter=',')
+data = data[~np.isnan(data[:, 1])]
+n = data.shape[0]
+x = np.hstack((np.ones(n).reshape(n, 1),
+              data[:,0].reshape(n, 1)))
+logit_mod = sm.Logit(data[:,1], x)
+logit_res = logit_mod.fit(); print(logit_res.summary())
+##### end of Listing 12.15 ##### 
+
+##### start of Listing 12.16 ##### 
+Date,Temperature,Damage Incident
+04/12/1981,66,0
+11/12/1981,70,1
+3/22/82,69,0
+6/27/82,80,NA
+01/11/1982,68,0
+04/04/1983,67,0
+6/18/83,72,0
+8/30/83,73,0
+11/28/83,70,0
+02/03/1984,57,1
+04/06/1984,63,1
+8/30/84,70,1
+10/05/1984,78,0
+11/08/1984,67,0
+1/24/85,53,1
+04/12/1985,67,0
+4/29/85,75,0
+6/17/85,70,0
+7/29/85,81,0
+8/27/85,76,0
+10/03/1985,79,0
+10/30/85,75,1
+11/26/85,76,0
+01/12/1986,58,1
+1/28/86,31,Challenger Accident
+##### end of Listing 12.16 ##### 
+
